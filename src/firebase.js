@@ -6,6 +6,8 @@ import {
   getDocs,
   getFirestore,
   query as firestoreQuery,
+  serverTimestamp,
+  setDoc,
   where,
 } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
 
@@ -55,5 +57,27 @@ export async function getLocationById(locationId) {
   } catch (error) {
     console.error('Error fetching location:', error);
     throw new Error('Failed to load location data.');
+  }
+}
+
+export async function saveLocation(locationId, data) {
+  try {
+    const docRef = doc(db, 'locations', locationId);
+    await setDoc(
+      docRef,
+      {
+        ...data,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return {
+      id: locationId,
+      ...data,
+    };
+  } catch (error) {
+    console.error('Error saving location:', error);
+    throw new Error('Failed to save location. Check Firestore rules and try again.');
   }
 }

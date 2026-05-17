@@ -135,10 +135,20 @@ const state = {
   time: 'evening',
   transport: 'walk',
   query: '',
+  view: window.location.hash === '#admin' ? 'admin' : 'report',
 };
 
 const $ = (selector) => document.querySelector(selector);
 let firebaseApiPromise;
+
+function escapeHtml(value = '') {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
 
 function icon(name) {
   const paths = {
@@ -269,7 +279,289 @@ function normalizeRemoteReport(data) {
   };
 }
 
+function slugify(value) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function rowsToText(rows) {
+  return rows.map((row) => row.join(' | ')).join('\n');
+}
+
+function listToText(items) {
+  return items.join('\n');
+}
+
+function parseList(value) {
+  return value
+    .split('\n')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function parseRows(value, expectedColumns) {
+  return value
+    .split('\n')
+    .map((line) => line.split('|').map((item) => item.trim()))
+    .filter((row) => row.some(Boolean))
+    .map((row) => {
+      while (row.length < expectedColumns) row.push('');
+      return row.slice(0, expectedColumns);
+    });
+}
+
+function adminTemplateReport() {
+  return getActiveReport();
+}
+
+function getAdminPayload(form) {
+  const formData = new FormData(form);
+  const name = formData.get('name').trim();
+  const city = formData.get('city').trim();
+  const searchKeys = parseList(formData.get('search_keys')).map((item) => item.toLowerCase());
+  const stats = parseRows(formData.get('stats'), 3).map(([label, level, value]) => [label, level, Number(value) || 0]);
+  const coordinates = [Number(formData.get('latitude')) || 22.3072, Number(formData.get('longitude')) || 73.1812];
+
+  return {
+    locationName: name,
+    name,
+    city,
+    state: formData.get('state').trim() || 'Gujarat',
+    search_keys: [...new Set(searchKeys)],
+    score: Number(formData.get('score')) || 70,
+    confidence: Number(formData.get('confidence')) || 80,
+    trend: formData.get('trend').trim() || 'Stable',
+    updated: formData.get('updated').trim() || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+    summary: formData.get('summary').trim(),
+    summaryText: formData.get('summary').trim(),
+    coordinates,
+    stats,
+    incidents: parseRows(formData.get('incidents'), 4),
+    emergencyHubs: parseRows(formData.get('hubs'), 4).map(([hubName, type, distance, hours]) => ({
+      name: hubName,
+      type,
+      distance,
+      hours,
+    })),
+    plan: parseList(formData.get('plan')),
+  };
+}
+
+function getAiEndpoint() {
+  return localStorage.getItem('safeforme-ai-endpoint') || '';
+}
+
+function setFieldValue(form, name, value) {
+  const field = form.elements.namedItem(name);
+  if (field) field.value = value ?? '';
+}
+
+function applyAiDraftToForm(form, draft) {
+  const data = draft.report || draft;
+  const coordinates = normalizeCoordinates(data);
+  const stats = normalizeStats(data);
+  const incidents = normalizeIncidents(data);
+  const hubs = normalizeHubs(data);
+  const plan = data.plan || data.recommendations || data.safetyTips || [];
+
+  setFieldValue(form, 'document_id', data.id || slugify(data.name || data.locationName || form.elements.namedItem('name').value));
+  setFieldValue(form, 'name', data.name || data.locationName || '');
+  setFieldValue(form, 'city', data.city || data.region || data.address || 'Vadodara, Gujarat');
+  setFieldValue(form, 'state', data.state || 'Gujarat');
+  setFieldValue(form, 'latitude', coordinates[0]);
+  setFieldValue(form, 'longitude', coordinates[1]);
+  setFieldValue(form, 'score', data.score || data.safetyScore || 70);
+  setFieldValue(form, 'confidence', data.confidence || 80);
+  setFieldValue(form, 'trend', data.trend || 'AI draft');
+  setFieldValue(form, 'updated', data.updated || new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }));
+  setFieldValue(form, 'search_keys', listToText(data.search_keys || data.query || []));
+  setFieldValue(form, 'summary', data.summary || data.summaryText || '');
+  setFieldValue(form, 'plan', listToText(plan));
+  setFieldValue(form, 'stats', rowsToText(stats));
+  setFieldValue(form, 'incidents', rowsToText(incidents));
+  setFieldValue(form, 'hubs', rowsToText(hubs));
+}
+
+async function generateAiDraft(form) {
+  const endpoint = form.elements.namedItem('ai_endpoint').value.trim();
+  const status = $('#ai-status');
+  const brief = form.elements.namedItem('ai_brief').value.trim();
+
+  if (!endpoint) {
+    status.textContent = 'Add your AI proxy endpoint first.';
+    return;
+  }
+
+  if (!brief) {
+    status.textContent = 'Describe the location you want the AI to draft.';
+    return;
+  }
+
+  localStorage.setItem('safeforme-ai-endpoint', endpoint);
+  status.textContent = 'Generating AI draft...';
+
+  const payload = getAdminPayload(form);
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      locationBrief: brief,
+      currentDraft: payload,
+      outputSchema: {
+        id: 'document-id',
+        name: 'Location name',
+        city: 'City, Gujarat',
+        state: 'Gujarat',
+        search_keys: ['lowercase', 'pin code'],
+        score: 0,
+        confidence: 0,
+        trend: 'Stable',
+        updated: 'date label',
+        summary: 'short safety summary',
+        coordinates: [22.3072, 73.1812],
+        stats: [['Personal safety', 'Strong', 80]],
+        incidents: [['Area', 'Signal', 'Time', 'Medium']],
+        emergencyHubs: [{ name: 'Hub name', type: 'Police', distance: '1.0 km', hours: '24/7' }],
+        plan: ['Safety recommendation'],
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`AI endpoint returned ${response.status}`);
+  }
+
+  const draft = await response.json();
+  applyAiDraftToForm(form, draft);
+  status.textContent = 'AI draft applied. Review it, then save to Firestore.';
+}
+
+function renderAdmin() {
+  const report = adminTemplateReport();
+
+  $('#app').innerHTML = `
+    <div class="shell admin-shell">
+      <aside class="sidebar">
+        <a class="brand" href="#" data-view="report" aria-label="Safe For Me reports">
+          <span class="brand-mark">${icon('shield')}</span>
+          <span><strong>Safe For Me</strong><small>Admin console</small></span>
+        </a>
+
+        <div class="admin-note">
+          <strong>Firestore target</strong>
+          <span>Collection: locations</span>
+        </div>
+
+        <nav class="location-list" aria-label="Admin presets">
+          ${getAllReports().map(
+            (item) => `
+              <button class="location-item ${item.id === report.id ? 'active' : ''}" data-admin-report="${item.id}">
+                <span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.city)}</small></span>
+                <b>${item.score}</b>
+              </button>
+            `,
+          ).join('')}
+        </nav>
+      </aside>
+
+      <main class="workspace admin-workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Admin</p>
+            <h1>Update safety data</h1>
+            <p>Create or update Firestore location documents for Gujarat and Vadodara reports.</p>
+          </div>
+          <div class="actions">
+            <button class="ghost" type="button" data-view="report">${icon('map')} Reports</button>
+          </div>
+        </header>
+
+        <form class="admin-form" id="admin-form">
+          <section class="panel admin-panel ai-panel">
+            <div class="section-title"><h2>AI report draft</h2></div>
+            <p class="field-help">Use a server-side proxy for Gemini. GitHub Pages cannot safely read GitHub Secrets in the browser.</p>
+            <label>AI proxy endpoint<input name="ai_endpoint" value="${escapeHtml(getAiEndpoint())}" placeholder="https://your-worker.example.com/generate-report" /></label>
+            <label>Location brief<textarea name="ai_brief" rows="3" placeholder="Example: Generate a safety report for Gotri, Vadodara with hospitals, police, road safety, night travel, and PIN codes."></textarea></label>
+            <div class="inline-actions">
+              <button class="ghost" type="button" id="generate-ai-draft">${icon('shield')} Generate AI draft</button>
+              <p class="form-note" id="ai-status">Draft first, then review before saving.</p>
+            </div>
+          </section>
+
+          <section class="admin-grid">
+            <article class="panel admin-panel">
+              <div class="section-title"><h2>Document</h2></div>
+              <label>Document ID<input name="document_id" value="${escapeHtml(report.id)}" placeholder="vadodara-central" required /></label>
+              <label>Location name<input name="name" value="${escapeHtml(report.name)}" required /></label>
+              <label>City / region<input name="city" value="${escapeHtml(report.city)}" required /></label>
+              <label>State<input name="state" value="Gujarat" /></label>
+              <div class="form-row">
+                <label>Latitude<input name="latitude" type="number" step="0.0001" value="${report.coordinates[0]}" /></label>
+                <label>Longitude<input name="longitude" type="number" step="0.0001" value="${report.coordinates[1]}" /></label>
+              </div>
+            </article>
+
+            <article class="panel admin-panel">
+              <div class="section-title"><h2>Score</h2></div>
+              <div class="form-row">
+                <label>Safety score<input name="score" type="number" min="0" max="100" value="${report.score}" /></label>
+                <label>Confidence<input name="confidence" type="number" min="0" max="100" value="${report.confidence}" /></label>
+              </div>
+              <label>Trend<input name="trend" value="${escapeHtml(report.trend)}" /></label>
+              <label>Updated label<input name="updated" value="${escapeHtml(report.updated)}" /></label>
+              <label>Search keys<textarea name="search_keys" rows="5">${escapeHtml(listToText(report.query))}</textarea></label>
+            </article>
+          </section>
+
+          <section class="panel admin-panel">
+            <div class="section-title"><h2>Report copy</h2></div>
+            <label>Summary<textarea name="summary" rows="4" required>${escapeHtml(report.summary)}</textarea></label>
+            <label>Recommended plan<textarea name="plan" rows="4">${escapeHtml(listToText(report.plan))}</textarea></label>
+          </section>
+
+          <section class="admin-grid">
+            <article class="panel admin-panel">
+              <div class="section-title"><h2>Stats</h2></div>
+              <p class="field-help">One row per stat: label | level | score</p>
+              <textarea name="stats" rows="8">${escapeHtml(rowsToText(report.stats))}</textarea>
+            </article>
+            <article class="panel admin-panel">
+              <div class="section-title"><h2>Incident signals</h2></div>
+              <p class="field-help">One row per incident: area | type | time | severity</p>
+              <textarea name="incidents" rows="8">${escapeHtml(rowsToText(report.incidents))}</textarea>
+            </article>
+          </section>
+
+          <section class="panel admin-panel">
+            <div class="section-title"><h2>Emergency hubs</h2></div>
+            <p class="field-help">One row per hub: name | type | distance | hours</p>
+            <textarea name="hubs" rows="6">${escapeHtml(rowsToText(report.hubs))}</textarea>
+          </section>
+
+          <footer class="admin-actions">
+            <button class="primary" type="submit">${icon('shield')} Save to Firestore</button>
+            <button class="ghost" type="button" id="load-firestore-location">${icon('search')} Load by document ID</button>
+            <p class="form-note" id="admin-status">Use Firestore rules to protect admin writes.</p>
+          </footer>
+        </form>
+      </main>
+    </div>
+  `;
+
+  bindAdminEvents();
+}
+
 function render() {
+  if (state.view === 'admin') {
+    renderAdmin();
+    return;
+  }
+
   const report = getActiveReport();
   const score = adjustedScore(report);
 
@@ -280,6 +572,7 @@ function render() {
           <span class="brand-mark">${icon('shield')}</span>
           <span><strong>Safe For Me</strong><small>Safety intelligence</small></span>
         </a>
+        <button class="ghost sidebar-action" type="button" data-view="admin">${icon('shield')} Admin</button>
 
         <form class="search" id="search-form">
           <label for="location-search">Location</label>
@@ -295,7 +588,7 @@ function render() {
           ${getAllReports().map(
             (item) => `
               <button class="location-item ${item.id === report.id ? 'active' : ''}" data-report="${item.id}">
-                <span><strong>${item.name}</strong><small>${item.city}</small></span>
+                <span><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(item.city)}</small></span>
                 <b>${item.score}</b>
               </button>
             `,
@@ -306,9 +599,9 @@ function render() {
       <main class="workspace">
         <header class="topbar">
           <div>
-            <p class="eyebrow">Updated ${report.updated}</p>
-            <h1>${report.name}</h1>
-            <p>${report.city}</p>
+            <p class="eyebrow">Updated ${escapeHtml(report.updated)}</p>
+            <h1>${escapeHtml(report.name)}</h1>
+            <p>${escapeHtml(report.city)}</p>
           </div>
           <div class="actions">
             <button class="ghost" id="print-report" type="button">${icon('print')} Print</button>
@@ -324,11 +617,11 @@ function render() {
             </div>
             <div class="score-copy">
               <div class="status-row">
-                <span class="pill">${report.trend}</span>
+                <span class="pill">${escapeHtml(report.trend)}</span>
                 <span class="pill neutral">${report.confidence}% confidence</span>
               </div>
               <h2>Personal safety report</h2>
-              <p>${report.summary}</p>
+              <p>${escapeHtml(report.summary)}</p>
             </div>
           </article>
 
@@ -360,7 +653,7 @@ function render() {
             .map(
               ([label, level, value]) => `
                 <article class="metric">
-                  <div><span>${label}</span><strong>${level}</strong></div>
+                  <div><span>${escapeHtml(label)}</span><strong>${escapeHtml(level)}</strong></div>
                   <meter min="0" max="100" value="${value}"></meter>
                 </article>
               `,
@@ -376,8 +669,8 @@ function render() {
                 .map(
                   ([area, type, time, severity]) => `
                     <div class="incident">
-                      <span class="severity ${severity.toLowerCase()}">${severity}</span>
-                      <div><strong>${area}</strong><small>${type} / ${time}</small></div>
+                      <span class="severity ${escapeHtml(String(severity).toLowerCase())}">${escapeHtml(severity)}</span>
+                      <div><strong>${escapeHtml(area)}</strong><small>${escapeHtml(type)} / ${escapeHtml(time)}</small></div>
                     </div>
                   `,
                 )
@@ -392,8 +685,8 @@ function render() {
                 .map(
                   ([name, type, distance, hours]) => `
                     <div class="hub">
-                      <div><strong>${name}</strong><small>${type} / ${hours}</small></div>
-                      <span>${distance}</span>
+                      <div><strong>${escapeHtml(name)}</strong><small>${escapeHtml(type)} / ${escapeHtml(hours)}</small></div>
+                      <span>${escapeHtml(distance)}</span>
                     </div>
                   `,
                 )
@@ -408,7 +701,7 @@ function render() {
             <h2>Before you go</h2>
           </div>
           <ol>
-            ${report.plan.map((item) => `<li>${item}</li>`).join('')}
+            ${report.plan.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
           </ol>
         </section>
       </main>
@@ -419,6 +712,14 @@ function render() {
 }
 
 function bindEvents() {
+  document.querySelectorAll('[data-view]').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.view = button.dataset.view;
+      window.location.hash = state.view === 'admin' ? 'admin' : state.activeId;
+      render();
+    });
+  });
+
   $('#search-form').addEventListener('submit', async (event) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -485,9 +786,97 @@ function bindEvents() {
   $('#print-report').addEventListener('click', () => window.print());
 }
 
+function bindAdminEvents() {
+  document.querySelectorAll('[data-view]').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.view = button.dataset.view;
+      window.location.hash = state.activeId;
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-admin-report]').forEach((button) => {
+    button.addEventListener('click', () => {
+      state.activeId = button.dataset.adminReport;
+      renderAdmin();
+    });
+  });
+
+  $('#load-firestore-location').addEventListener('click', async () => {
+    const form = $('#admin-form');
+    const status = $('#admin-status');
+    const locationId = new FormData(form).get('document_id').trim();
+
+    if (!locationId) {
+      status.textContent = 'Enter a document ID first.';
+      return;
+    }
+
+    status.textContent = 'Loading from Firestore...';
+    try {
+      const { getLocationById } = await loadFirebaseApi();
+      const data = await getLocationById(locationId);
+      const report = normalizeRemoteReport(data);
+      state.remoteReports.set(report.id, report);
+      state.activeId = report.id;
+      renderAdmin();
+    } catch (error) {
+      status.textContent = error.message || 'Could not load this document.';
+    }
+  });
+
+  $('#generate-ai-draft').addEventListener('click', async () => {
+    const form = $('#admin-form');
+    const button = $('#generate-ai-draft');
+    const status = $('#ai-status');
+
+    button.disabled = true;
+    try {
+      await generateAiDraft(form);
+    } catch (error) {
+      status.textContent = error.message || 'AI generation failed.';
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $('#admin-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const status = $('#admin-status');
+    const payload = getAdminPayload(form);
+    const documentId = new FormData(form).get('document_id').trim() || slugify(payload.name);
+
+    status.textContent = 'Saving to Firestore...';
+    form.querySelector('button[type="submit"]').disabled = true;
+
+    try {
+      const { saveLocation } = await loadFirebaseApi();
+      const saved = await saveLocation(documentId, payload);
+      const report = normalizeRemoteReport(saved);
+      state.remoteReports.set(report.id, report);
+      state.activeId = report.id;
+      status.textContent = `Saved ${documentId} to Firestore.`;
+    } catch (error) {
+      status.textContent = error.message || 'Could not save this document.';
+    } finally {
+      form.querySelector('button[type="submit"]').disabled = false;
+    }
+  });
+}
+
 const initialId = window.location.hash.replace('#', '');
-if (REPORTS.some((report) => report.id === initialId)) {
+if (initialId === 'admin') {
+  state.view = 'admin';
+} else if (REPORTS.some((report) => report.id === initialId)) {
   state.activeId = initialId;
 }
+
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash.replace('#', '');
+  state.view = hash === 'admin' ? 'admin' : 'report';
+  if (hash && hash !== 'admin') state.activeId = hash;
+  render();
+});
 
 render();
