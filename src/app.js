@@ -106,6 +106,43 @@ const REPORTS = [
     ],
   },
   {
+    id: 'ajwa-road',
+    name: 'Ajwa Road',
+    city: 'Vadodara, Gujarat',
+    query: ['ajwa road', 'baroda', '390019', 'vrundavan', 'kamla nagar', 'ajwa chowkdi'],
+    score: 68,
+    confidence: 82,
+    trend: 'Stable',
+    updated: 'May 17, 2026',
+    summary:
+      'Ajwa Road is a major residential and commercial corridor in East Vadodara. While generally safe during the day with excellent hospital and police coverage, it faces high road safety risks due to its proximity to the NH-48 highway. Residential theft spikes and traffic congestion at Ajwa Chowkdi are notable concerns.',
+    coordinates: [22.3167, 73.2306],
+    stats: [
+      ['Personal safety', 'Strong', 75],
+      ['Theft exposure', 'Moderate', 60],
+      ['Street lighting', 'Moderate', 65],
+      ['Transit access', 'Strong', 80],
+      ['Road safety', 'Elevated risk', 45],
+      ['Response proximity', 'Strong', 85],
+    ],
+    incidents: [
+      ['Ajwa Chowkdi & NH-48', 'High-speed traffic and accident risk', 'Night', 'High'],
+      ['Vrundavan & Kamla Nagar', 'Petty theft and vehicle snatching', 'Late evening', 'Medium'],
+      ['Interior service roads', 'Low lighting and blind spot risk', 'Late night', 'Medium'],
+    ],
+    hubs: [
+      ['Bapod Police Station', 'Police', '0.5 km', '24/7'],
+      ['Siddhi ICU & Multispeciality', 'Hospital', '0.8 km', '24/7'],
+      ['BAG Hospital', 'Hospital', '2.5 km', '24/7'],
+      ['181 Abhayam Helpline', 'Women Help', 'Direct call', '24/7'],
+    ],
+    plan: [
+      'Use caution at Ajwa Chowkdi and highway feeder roads',
+      'Ensure home security with double locks for independent houses',
+      'Avoid service roads after 11 PM if unlit',
+    ],
+  },
+  {
     id: 'ahmedabad-west',
     name: 'Ahmedabad West',
     city: 'Ahmedabad, Gujarat',
