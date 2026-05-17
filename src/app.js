@@ -174,6 +174,42 @@ const REPORTS = [
     ],
     plan: ['Use marked pickup zones after events and mall visits', 'Avoid walking on service roads late at night', 'Keep emergency contacts ready for highway travel'],
   },
+  {
+    id: 'golden-chokdi',
+    name: 'Golden Chokdi',
+    city: 'Vadodara, Gujarat',
+    query: ['golden chokdi', 'baroda', 'harni', 'nh48'],
+    score: 75,
+    confidence: 85,
+    trend: 'Stable',
+    updated: 'May 17, 2026',
+    summary:
+      'Golden Chokdi is a major highway intersection on NH-48. While violent crime is low, traffic congestion and road safety are the primary concerns. Proximity to industrial zones and the highway makes it a high-traffic area, requiring caution during commutes.',
+    coordinates: [22.3486, 73.2268],
+    stats: [
+      ['Personal safety', 'Strong', 80],
+      ['Theft exposure', 'Moderate', 65],
+      ['Street lighting', 'Moderate', 70],
+      ['Transit access', 'Strong', 85],
+      ['Road safety', 'Elevated risk', 40],
+      ['Response proximity', 'Strong', 80],
+    ],
+    incidents: [
+      ['NH-48 Intersection', 'High-speed traffic and accident risk', 'Peak hours & Night', 'High'],
+      ['Transit stops', 'Petty theft', 'Afternoon', 'Low'],
+    ],
+    hubs: [
+      ['Harni Police Station', 'Police', '3.5 km', '24/7'],
+      ['Sterling Hospital', 'Hospital', '8.0 km', '24/7'],
+      ['Harni Fire Station', 'Fire', '5.0 km', '24/7'],
+      ['108 Ambulance', 'Medical Emergency', 'Direct call', '24/7'],
+    ],
+    plan: [
+      'Use flyovers when possible; avoid crossing NH-48 on foot',
+      'Keep emergency numbers handy for traffic accidents',
+      'Be cautious of heavy industrial transport vehicles',
+    ],
+  },
 ];
 
 const state = {
