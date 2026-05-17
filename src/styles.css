@@ -142,6 +142,11 @@ button {
   justify-content: center;
   gap: 8px;
   font-weight: 800;
+  text-decoration: none;
+}
+
+.danger:hover {
+  background: #911c13;
 }
 
 .primary {
@@ -441,13 +446,14 @@ h1 {
 
 .metric {
   padding: 16px;
+  display: grid;
+  gap: 12px;
 }
 
-.metric div {
+.metric-info {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
 }
 
 .metric span {
@@ -458,20 +464,18 @@ h1 {
   color: #17201e;
 }
 
-meter {
-  width: 100%;
+.progress-bar {
   height: 9px;
-}
-
-meter::-webkit-meter-bar {
   background: #e5eeeb;
-  border: 0;
   border-radius: 999px;
+  overflow: hidden;
 }
 
-meter::-webkit-meter-optimum-value {
+.progress-fill {
+  height: 100%;
   background: #0f766e;
   border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .content-grid {
@@ -523,6 +527,30 @@ meter::-webkit-meter-optimum-value {
   display: block;
 }
 
+.hub-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.hub-call {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f0fdfa;
+  color: #0f766e;
+  display: grid;
+  place-items: center;
+  border: 1px solid #ccfbf1;
+  transition: all 0.2s ease;
+}
+
+.hub-call:hover {
+  background: #0f766e;
+  color: white;
+  transform: scale(1.1);
+}
+
 .severity.medium {
   background: #fff3c4;
   color: #92400e;
@@ -557,15 +585,25 @@ meter::-webkit-meter-optimum-value {
   color: #81e6d9;
 }
 
-.plan-band ol {
+.checklist {
+  list-style: none;
   margin: 0;
-  padding-left: 22px;
+  padding: 0;
   display: grid;
-  gap: 10px;
+  gap: 14px;
 }
 
-.plan-band li {
-  padding-left: 4px;
+.checklist li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.checklist .icon {
+  color: #81e6d9;
+  width: 1.2rem;
+  height: 1.2rem;
+  margin-top: 2px;
 }
 
 .admin-shell {

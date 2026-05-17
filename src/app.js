@@ -9,7 +9,7 @@ const REPORTS = [
     trend: 'Improving',
     updated: 'May 17, 2026',
     summary:
-      'Strong daytime movement around transport, markets, hospitals, and civic zones gives central Vadodara a dependable safety baseline. Late-night travel near isolated lanes and parking stretches still needs planning.',
+      'Strong daytime movement around transport, markets, hospitals, and civic zones gives central Vadodara a dependable safety baseline. Late-night travel near isolated lanes, parking stretches, and "dark spots" like Navlakhi compound still needs careful planning.',
     coordinates: [22.3072, 73.1812],
     stats: [
       ['Personal safety', 'Strong', 78],
@@ -22,11 +22,13 @@ const REPORTS = [
     incidents: [
       ['Railway station exits', 'Bag snatching and touting risk', 'Late evening', 'Medium'],
       ['Mandvi and market lanes', 'Pickpocketing in dense crowds', 'Afternoon', 'Low'],
-      ['Isolated parking edges', 'Two-wheeler theft exposure', 'Night', 'Medium'],
+      ['Isolated parking edges', 'Two-wheeler theft and harassment exposure', 'Night', 'Medium'],
+      ['Navlakhi Compound area', 'Isolated "dark spot" risk', 'Late night', 'High'],
     ],
     hubs: [
       ['SSG Hospital', 'Hospital', '1.0 km', '24/7'],
       ['Raopura Police Station', 'Police', '1.2 km', '24/7'],
+      ['181 Abhayam Helpline', 'Women Help', 'Direct call', '24/7'],
       ['Vadodara Fire Brigade HQ', 'Fire', '1.8 km', '24/7'],
     ],
     plan: ['Prefer station pickup points and main roads after 10 PM', 'Park two-wheelers in guarded or visible areas', 'Keep valuables close in Mandvi, Nyay Mandir, and market crowds'],
@@ -36,15 +38,15 @@ const REPORTS = [
     name: 'Alkapuri and Sayajigunj',
     city: 'Vadodara, Gujarat',
     query: ['alkapuri', 'sayajigunj', 'fatehgunj', '390005', '390020'],
-    score: 81,
+    score: 77,
     confidence: 85,
     trend: 'Stable',
     updated: 'May 17, 2026',
     summary:
-      'Commercial activity, hotels, colleges, and transport access keep this corridor active through most of the day. The main risks are late-night walking alone, unguarded parking, and crowd-related theft near busy stops.',
+      'Commercial activity, hotels, and transport access keep this corridor active. However, the Fatehgunj area is currently flagged as a high-risk zone for violent crimes. Risks include late-night walking alone and street harassment near busy stops.',
     coordinates: [22.3104, 73.1708],
     stats: [
-      ['Personal safety', 'Strong', 84],
+      ['Personal safety', 'Moderate', 72],
       ['Theft exposure', 'Moderate', 50],
       ['Street lighting', 'Strong', 83],
       ['Transit access', 'Strong', 91],
@@ -54,11 +56,13 @@ const REPORTS = [
     incidents: [
       ['Station road approaches', 'Phone and wallet theft exposure', 'Evening', 'Medium'],
       ['Hotel and cafe parking', 'Two-wheeler theft exposure', 'Night', 'Medium'],
-      ['College-area side lanes', 'Harassment complaints risk', 'Late evening', 'Low'],
+      ['Fatehgunj corridor', 'Violent crime risk and harassment', 'Late evening', 'High'],
+      ['College-area side lanes', 'Eve-teasing and harassment risk', 'Late evening', 'Medium'],
     ],
     hubs: [
       ['Sterling Hospital Vadodara', 'Hospital', '1.6 km', '24/7'],
       ['Sayajigunj Police Station', 'Police', '0.8 km', '24/7'],
+      ['181 Abhayam Helpline', 'Women Help', 'Direct call', '24/7'],
       ['Akota Fire Station', 'Fire', '3.0 km', '24/7'],
     ],
     plan: ['Use main pickup points near hotels, malls, and station roads', 'Avoid isolated campus-side lanes after late dinners', 'Do not leave helmets, laptops, or bags visible on two-wheelers or in cars'],
@@ -68,15 +72,15 @@ const REPORTS = [
     name: 'Manjalpur and Makarpura',
     city: 'Vadodara, Gujarat',
     query: ['manjalpur', 'makarpura', 'tarsali', '390009', '390010'],
-    score: 73,
+    score: 62,
     confidence: 82,
-    trend: 'Stable',
+    trend: 'Under Surveillance',
     updated: 'May 17, 2026',
     summary:
-      'Residential blocks, industrial movement, and arterial roads make daytime travel practical. Risk increases late at night around low-footfall stretches, service roads, and industrial approaches.',
+      'Residential blocks and industrial movement make daytime travel practical. However, both areas are officially flagged under "Project Shastra" for violent crime risks, particularly between 6 PM and midnight. Higher risk in low-footfall industrial stretches.',
     coordinates: [22.2559, 73.1885],
     stats: [
-      ['Personal safety', 'Moderate', 70],
+      ['Personal safety', 'Elevated risk', 58],
       ['Theft exposure', 'Moderate', 58],
       ['Street lighting', 'Moderate', 64],
       ['Transit access', 'Moderate', 68],
@@ -84,16 +88,22 @@ const REPORTS = [
       ['Response proximity', 'Moderate', 73],
     ],
     incidents: [
-      ['Makarpura GIDC approaches', 'Low-footfall travel risk', 'Night', 'Medium'],
-      ['Service road parking', 'Vehicle theft exposure', 'Evening', 'Medium'],
-      ['Tarsali junction area', 'Traffic and pedestrian conflict', 'Peak hours', 'Low'],
+      ['Makarpura GIDC area', 'Violent crime risk (Project Shastra)', '6 PM - 12 AM', 'High'],
+      ['Service road stretches', 'Harassment and vehicle theft risk', 'Night', 'Medium'],
+      ['Isolated approaches', 'Low-footfall travel risk for women', 'Late evening', 'High'],
     ],
     hubs: [
-      ['Bhailal Amin General Hospital', 'Hospital', '6.0 km', '24/7'],
       ['Makarpura Police Station', 'Police', '1.4 km', '24/7'],
+      ['SHE Team Patrol (Vadodara Police)', 'Women Safety', 'Mobile', '24/7'],
+      ['181 Abhayam Helpline', 'Women Help', 'Direct call', '24/7'],
       ['Makarpura Fire Station', 'Fire', '1.8 km', '24/7'],
     ],
-    plan: ['Prefer cab or auto for late-night industrial-area travel', 'Stick to arterial roads instead of service lanes', 'Share live location when commuting after shift hours'],
+    plan: [
+      'Avoid traveling alone in industrial stretches after 6 PM',
+      'Utilize the 181 Abhayam helpline for any distress or safe passage needs',
+      'Stick to well-lit arterial roads; avoid service lanes after dark',
+      'Share live location with emergency contacts when commuting after shift hours',
+    ],
   },
   {
     id: 'ahmedabad-west',
@@ -158,6 +168,7 @@ function icon(name) {
     phone: '<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"></path>',
     alert: '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path>',
     print: '<path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><path d="M6 14h12v8H6z"></path>',
+    check: '<path d="M20 6L9 17l-5-5"></path>',
   };
   return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${paths[name]}</svg>`;
 }
@@ -605,7 +616,7 @@ function render() {
           </div>
           <div class="actions">
             <button class="ghost" id="print-report" type="button">${icon('print')} Print</button>
-            <button class="danger" type="button">${icon('phone')} Emergency: 112 / 108</button>
+            <a class="danger" href="tel:112">${icon('phone')} Emergency: 112</a>
           </div>
         </header>
 
@@ -653,8 +664,8 @@ function render() {
             .map(
               ([label, level, value]) => `
                 <article class="metric">
-                  <div><span>${escapeHtml(label)}</span><strong>${escapeHtml(level)}</strong></div>
-                  <meter min="0" max="100" value="${value}"></meter>
+                  <div class="metric-info"><span>${escapeHtml(label)}</span><strong>${escapeHtml(level)}</strong></div>
+                  <div class="progress-bar"><div class="progress-fill" style="width:${value}%"></div></div>
                 </article>
               `,
             )
@@ -685,8 +696,14 @@ function render() {
                 .map(
                   ([name, type, distance, hours]) => `
                     <div class="hub">
-                      <div><strong>${escapeHtml(name)}</strong><small>${escapeHtml(type)} / ${escapeHtml(hours)}</small></div>
-                      <span>${escapeHtml(distance)}</span>
+                      <div>
+                        <strong>${escapeHtml(name)}</strong>
+                        <small>${escapeHtml(type)} / ${escapeHtml(hours)}</small>
+                      </div>
+                      <div class="hub-actions">
+                        <span>${escapeHtml(distance)}</span>
+                        <a href="tel:112" class="hub-call" aria-label="Call ${escapeHtml(name)}">${icon('phone')}</a>
+                      </div>
                     </div>
                   `,
                 )
@@ -700,9 +717,9 @@ function render() {
             <p class="eyebrow">Recommended plan</p>
             <h2>Before you go</h2>
           </div>
-          <ol>
-            ${report.plan.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
-          </ol>
+          <ul class="checklist">
+            ${report.plan.map((item) => `<li>${icon('check')}${escapeHtml(item)}</li>`).join('')}
+          </ul>
         </section>
       </main>
     </div>
