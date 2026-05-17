@@ -6,7 +6,7 @@ import "./App.css";
 
 export default function App() {
   return (
-    <Router basename={import.meta.env.BASE_URL}>
+    <Router>
       <Routes>
         {/* Landing page / home */}
         <Route path="/" element={<Home />} />
